@@ -1,0 +1,20 @@
+Flask-SQLAlchemy
+Flask==2.2.5
+Flask-CORS
+requests
+python-dotenv
+psycopg2-binary
+gunicorn
+redis
+PyPDF2
+python-docx
+openai==0.28.0  # Locked to the compatible version you prefer
+openai[datalib]==0.28.0  # Ensures compatibility
+#pinecone-client>=5.0.0   # Check version compatible with your setup
+pinecone
+pytz
+librosa==0.10.0.*
+numba==0.56.4
+Flask-Migrate
+uvicorn
+beautifulsoup4

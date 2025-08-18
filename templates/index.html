@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KIMM - Document Query Interface</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container-fluid {
+            height: 100vh;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 100vh; /* Full viewport height */
+            overflow-y: auto; /* Scroll entire sidebar if needed */
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+            width: 100%;
+        }
+        .sidebar ul li {
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-width: 230px;
+            white-space: normal;
+            font-size: 16px;
+        }
+        #user-uploaded-files {
+            max-height: 300px; /* Limit height to fit ~10-15 items */
+            overflow-y: auto; /* Enable scrolling */
+            padding-left: 20px; /* Match indent */
+        }
+        .sidebar ul li a i {
+            margin-right: 10px;
+        }
+        .sidebar .profile {
+            text-align: center;
+            margin-top: auto;
+        }
+        .sidebar .profile i {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-bottom: 80px; /* Height of input box + some buffer */
+        }
+        .chat-box {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto; /* Ensure scrollability */
+            text-align: justify;
+            word-wrap: break-word; /* Handle long lines gracefully */
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            max-width: 75%;
+            font-size: 16px;
+        }
+        .chat-message.user {
+            text-align: left;
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            padding: 10px;
+        }
+        .assistant-message {
+            position: relative;
+            font-size: 16px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .copy-icon {
+            position: absolute;
+            bottom: 5px; /* Move to bottom */
+            right: 5px;  /* Keep on right */
+            cursor: pointer;
+            color: #8d9195;
+        }
+        .assistant-message a {
+            color: #007bff; /* Blue for links */
+            text-decoration: underline; /* Underline to make links distinct */
+            font-weight: bold; /* Optional, to highlight links */
+        }
+        .assistant-message a:hover {
+            color: #0056b3; /* Darker blue on hover for better feedback */
+        }
+        .chat-message.assistant {
+            text-align: justify;
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 10px;
+        }
+        .response-separator {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 30px 0;
+        }
+        .input-box {
+            display: flex;
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            bottom: 30px; /* Height of disclaimer + buffer */
+            left: 250px;
+            right: 0;
+            z-index: 1000;
+        }
+        .input-box input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #ddd;            
+        }
+        .input-box button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 10px;
+            font-size: 16px;           
+        }
+        #loading-spinner {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            top: 50%;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            margin: -30px 0 0 -30px;
+            border: 8px solid rgba(0, 0, 0, 0.1);
+            border-top-color: #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .source-entry {
+            font-size: 14px;
+            margin-top: 5px;
+            margin-left: 20px; /* Slight indent for hierarchy */
+            line-height: 1.4;
+            color: #555;
+            text-align: left !important; /* Override any conflicting styles */
+            text-indent: 0; /* Prevent unwanted indentation */
+        }
+        .response-block {
+            position: relative; /* Ensure the parent has relative positioning */
+            text-align: left;
+        }
+        .source-header {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        #loading-text {
+            display: none;
+            color: #007bff;
+            font-weight: bold;
+            animation: blinker 1s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+        .disclaimer {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            left: 0; /* Full width */
+            right: 0;
+            padding: 5px;
+            background-color: #f8f9fa; /* Match body background */
+            z-index: 999; /* Below input box */
+        }
+        .highlight {
+            background-color: yellow;
+            transition: background-color 1s ease;
+        }
+        html {
+            scroll-behavior: smooth;
+        }        
+        #user-uploaded-files li a i.fa-globe {
+            color: #28a745; /* Green color for web sources */
+        }
+        
+        .url-namespace {
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+    <!-- Sidebar Section -->
+    <div class="sidebar" id="sidebar">
+        <h2><i class="fas fa-folder"></i> KIMM</h2>
+        <ul id="namespace-list">
+            <li>
+                <a href="#" id="open-knowledge-base">
+                    <i class="fas fa-book"></i> Knowledge Base
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <ul id="knowledge-base-files" style="display: none; padding-left: 20px;"></ul>
+            </li>
+            <li>
+                <a href="#" id="upload-icon">
+                    <i class="fas fa-upload"></i> Upload Document
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+            </li>
+            <li>
+                <a href="#" id="previous-uploads">
+                    <i class="fas fa-history"></i> Previous User Uploads
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <ul id="user-uploaded-files" style="display: none; padding-left: 20px;"></ul>
+            </li>
+            <!-- Add URL upload button to the sidebar -->
+            <li>
+                <a href="#" id="upload-url" class="btn btn-success btn-sm"><i class="fas fa-globe"></i> Upload URL</a>
+            </li>
+        </ul>
+        <div class="profile">
+            <i class="fas fa-user-circle"></i>
+            <p>Max Muster</p>
+        </div>
+    </div>
+
+        <!-- Main Content Section -->
+        <div class="main-content">
+            <!-- Chat Box -->
+            <div id="chatHistory" class="chat-box">
+                <!-- Namespace banner -->
+                <div id="namespace-banner" class="namespace-banner" style="display: none;"></div>
+            
+                <!-- Chat messages -->
+                <div id="chatMessages"></div>
+            
+                <!-- Metadata section -->
+                <div id="metadata-section" style="display: none;">
+                    <h4 id="metadata-header">Metadata [or Reference sources]:</h4>
+                    <div id="metadata-output" style="padding-left: 20px; font-size: 14px; line-height: 1.6;"></div>
+                </div>                
+            </div>
+          
+            
+
+            <!-- Loading Spinner -->
+            <div id="loading-spinner"></div>
+
+            <!-- Loading Text -->
+            <div id="loading-text">Inference is being generated...</div>
+
+            <!-- Input Box -->
+            <div class="input-box">
+                <input type="text" id="queryInput" placeholder="Type your question...">
+                <button id="submitQuery" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                <input type="file" id="file-input" style="display: none;" accept=".pdf,.docx,.txt">
+            </div>            
+        </div>
+    </div>
+
+
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">Disclaimer: This AI model may generate erroneous inferences. Use with caution.</div>
+
+    <!-- JS Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        let source;
+        let fullResponse = "";
+        let currentNamespace = "";
+        let namespaces = [];
+
+    
+        $(document).ready(function () {            
+            namespaces = [];
+
+            loadNamespaces();
+
+            // Dropdown toggles
+            $('#open-knowledge-base').off('click').on('click', function () {
+                $('#knowledge-base-files').slideToggle();
+            });
+
+            $('#previous-uploads').off('click').on('click', function () {
+                $('#user-uploaded-files').slideToggle();
+            });
+
+            $('#upload-icon').off('click').on('click', function () {
+                $('#file-input').click();
+            });
+
+            $('#file-input').on('change', function () {
+                const file = $('#file-input')[0].files[0];
+                if (!file) {
+                    alert('No file selected. Please choose a file.');
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('file', file);
+                $('#loading-spinner').show();
+                $.ajax({
+                    url: '/upload-document',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        currentNamespace = response.namespace;
+                        namespaces.push(response.namespace);
+                        $('#user-uploaded-files').append(
+                            `<li><a href="#" class="namespace-link" data-namespace="${response.namespace}"><i class="fas fa-file-alt"></i> ${response.namespace}</a></li>`
+                        );
+                        $('#chatMessages').append('<div class="chat-message assistant">Document uploaded successfully! You can now ask questions about it.</div>');
+                        loadNamespaces();  // Refresh the list
+                        $('#loading-spinner').hide();
+                    },
+                    error: function (err) {
+                        const errorMessage = err.responseJSON?.error || 'Error uploading file. Please try again.';
+                        alert(errorMessage);
+                        $('#loading-spinner').hide();
+                    }
+                });
+            });
+
+            // Add URL Upload Handler
+            $('#upload-url').on('click', function() {
+                const url = prompt("Enter URL to upload:");
+                if (url) {
+                    showLoading("Searching, extracting, and indexing URL...");
+                    $.ajax({
+                        url: '/upload-url',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({url: url}),
+                        success: function(response) {
+                            hideLoading();
+                            currentNamespace = response.namespace;
+                            const displayTitle = `<a href="${response.url}" target="_blank">${response.title}</a>`;
+                            // Append immediately for instant feedback
+                            $('#user-uploaded-files').append(
+                                `<li><a href="#" class="namespace-link" data-namespace="${response.namespace}"><i class="fas fa-globe"></i> ${displayTitle}</a></li>`
+                            );
+                            $('#chatMessages').append(
+                                `<div class="chat-message assistant">URL uploaded successfully! What would you like to ask about the uploaded URL?</div>`
+                            );
+                            // Force a full refresh of the namespaces to ensure consistency
+                            loadNamespaces();  // Already present, but ensure it’s effective
+                            scrollToBottom();
+                        },
+                        error: function(err) {
+                            hideLoading();
+                            alert('Error uploading URL: ' + (err.responseJSON?.error || 'Unknown error'));
+                        }
+                    });
+                }
+            });                    
+
+
+            // Namespace Selection Handler
+            $('#namespace-list').on('click', '.namespace-link', function(e) {
+                e.preventDefault();
+                currentNamespace = $(this).attr('data-namespace') || $(this).text().trim();
+                console.log("Namespace set to:", currentNamespace);
+                $('#chatMessages').append(
+                    `<div class="chat-message assistant">Namespace switched to: ${currentNamespace}</div>`
+                );
+                scrollToBottom();
+            });
+
+            $('#submitQuery').on('click', submitQuery);
+            $('#queryInput').on('keydown', function (e) {
+                if (e.key === 'Enter') submitQuery();
+            });
+
+            function loadNamespaces() {
+                $.ajax({
+                    url: '/get_namespaces',
+                    type: 'GET',
+                    cache: false,  // Prevent caching issues
+                    success: function(response) {
+                        $('#knowledge-base-files').empty();
+                        $('#user-uploaded-files').empty();  // Clear existing items
+                        response.knowledge_base_files.forEach(ns => {
+                            $('#knowledge-base-files').append(
+                                `<li><a href="#" class="namespace-link" data-namespace="${ns}"><i class="fas fa-file-alt"></i> ${ns}</a></li>`
+                            );
+                        });
+                        response.user_uploads.forEach(item => {
+                            const icon = item.display.startsWith('http') ? 'fa-globe' : 'fa-file-alt';
+                            $('#user-uploaded-files').append(
+                                `<li><a href="#" class="namespace-link" data-namespace="${item.namespace}"><i class="fas ${icon}"></i> ${item.display}</a></li>`
+                            );
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Failed to load namespaces:', error);
+                    },
+                    complete: function() {
+                        // Ensure the dropdown reflects the latest state
+                        if ($('#previous-uploads').next('#user-uploaded-files').is(':visible')) {
+                            $('#user-uploaded-files').show();
+                        }
+                    }
+                });
+            }
+
+            function showLoading(message = "Inference is being generated...") {
+                $('#loading-spinner').show();
+                $('#loading-text').show().text(message);
+            }
+
+            function hideLoading() {
+                $('#loading-spinner').hide();
+                $('#loading-text').hide();
+            }
+
+            function submitQuery() {
+                const userMessage = $('#queryInput').val();
+                if (userMessage.trim() && currentNamespace) {
+                    console.log("Submitting query with namespace:", currentNamespace);
+                    $('#chatMessages').append(`<div class="chat-message user">${userMessage}</div>`);
+                    $('#queryInput').val('');
+                    showLoading();
+                    const responseBlock = $('<div class="response-block"></div>');
+                    $('#chatMessages').append(responseBlock);
+                    const source = new EventSource(`/query_stream?query=${encodeURIComponent(userMessage)}&namespace=${encodeURIComponent(currentNamespace)}`);
+                    source.onmessage = function (event) {
+                        const data = event.data.trim();
+                        if (data === "[DONE]") {
+                            hideLoading();
+                            responseBlock.append('<i class="fas fa-copy copy-icon" title="Copy to clipboard" onclick="copyToClipboard(this)"></i>');
+                            responseBlock.append('<hr class="response-separator">');
+                            scrollToBottom();
+                            source.close();
+                        } else if (data.startsWith("<br><b>Metadata")) {
+                            responseBlock.append(`<div class="assistant-message">${data}</div>`);
+                        } else if (data.match(/^\d+\.\s*Filename:/)) {
+                            responseBlock.append(`<div class="assistant-message source-entry">${data}</div>`);
+                        } else {
+                            responseBlock.append(`<div class="assistant-message">${data}</div>`);
+                        }
+                    };
+                } else {
+                    alert("No document uploaded or namespace selected.");
+                }
+            }
+
+            // Optional: Add a copy-to-clipboard function if not already present
+            function copyToClipboard(element) {
+                const text = $(element).parent('.response-block').text().trim();
+                navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
+            }
+
+            function renderMetadataLinks(data) {
+                return data.replace(/\[(\d+)\]/g, (match, p1) => {
+                    return `<a href="#metadata-${p1}" class="metadata-link">${match}</a>`;
+                });
+            }
+
+            function scrollToBottom() {
+                setTimeout(() => {
+                    const chatBox = $('#chatHistory');
+                    chatBox.scrollTop(chatBox[0].scrollHeight);
+                }, 100);
+            }
+        });
+
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
+
+    </script>
+
+</body>
+</html>

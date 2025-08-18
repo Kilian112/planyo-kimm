@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CORS Test (Production)</title>
+</head>
+<body>
+    <h1>API Response Test</h1>
+    <p>Click below to test the API and check the response in the browser console.</p>
+    
+    <script>
+        const queryEndpoint = "http://164.92.195.181/api/query?nocache="; // DigitalOcean URL
+
+        fetch(queryEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": "342788c7a4f1f",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({ 
+                query: "Does Cologne have any particular laws affecting renovations and client responsibility? Provide all responses in English.", 
+                namespace: "knowledge_base"
+            }),
+        })
+        .then(response => response.text())  // Get raw text first to inspect
+        .then(text => {
+            console.log("Raw response:", text);
+            return JSON.parse(text);
+        })
+        .then(data => {
+            console.log("Parsed Response:", JSON.stringify(data, null, 2));
+        })
+        .catch(error => console.error("Error:", error));
+    </script>
+</body>
+</html>
+

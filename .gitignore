@@ -1,0 +1,42 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environment folder
+venv/
+env/
+
+# OS generated files
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.pdf
+
+# certs
+certs/
+
+uploads/
+
+# Ignore environment variables
+.env
+
+# Redis data (if using Redis persistence)
+redis_data/
+
+# Commands file
+.txt
+
+# Test .py files
+.test.py
+.test_2.py
+.test_3.py
+.delete_namespaces.py
+
+# Html files
+.admin_dashboard.html
+.admin_login.html
+
+# Txt files
+.commands.txt

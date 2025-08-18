@@ -1,0 +1,16 @@
+
+sudo systemctl restart nginx
+
+
+
+FIrst run the enclosed file:
+python main.py 
+
+Then open a terminal in the same directory and do the following.....
+
+Upload the PDF:
+curl -X POST http://localhost:8001/extract-text/ -H "x-api-key: 342788c7a4f1f" -F "file=@./Transcript.pdf"
+
+Query the document:
+curl -X POST http://localhost:8001/query-llm/ -H "x-api-key: 342788c7a4f1f" -H "Content-Type: application/json" -d '{"query": "What grades did Uzo receive?"}'
+

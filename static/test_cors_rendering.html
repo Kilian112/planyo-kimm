@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CORS Test with Button</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <p>Click the button below to test the API:</p>
+    <button id="test-button">Test API</button>
+    <pre id="result">Waiting for response...</pre>
+
+    <script>
+        document.getElementById('test-button').addEventListener('click', () => {
+            document.getElementById('result').textContent = "Fetching response...";
+
+            // Corrected endpoint (removed /1/ from the URL)
+            const queryEndpoint = "http://164.92.195.181/api/query?nocache=" + new Date().getTime();
+
+            fetch(queryEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": "342788c7a4f1f",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ 
+                    query: "Does cologne have any particular laws affecting renovations and the clients responsibility? Give all responses in English", 
+                    namespace: "knowledge_base" 
+                }),
+            })
+
+            .then(response => response.text())  
+            .then(text => {
+                console.log("Raw response:", text);
+
+                // Ensure response is JSON before parsing
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    return JSON.parse(text);  // Parse JSON only if it's valid
+                } else {
+                    throw new Error("Received non-JSON response: " + text);
+                }
+            })
+            .then(data => {
+                if (data.error) {  // Handle API error responses properly
+                    throw new Error("API Error: " + data.error);
+                }
+
+                // Reorder the AI Response fields
+                const orderedAIResponse = {
+                    "text": data["AI Response"]["text"],
+                    "anchor_url": data["AI Response"]["anchor_url"],
+                    "anchor_label": data["AI Response"]["anchor_label"]
+                };
+
+                // Reorder the Metadata array
+                const orderedMetadata = data["Metadata [or Reference sources]"].map(item => ({
+                    "file_name": item["file_name"],
+                    "page_number": item["page_number"],
+                    "court_decision_date": item["court_decision_date"]
+                }));
+
+                // Construct the final ordered JSON object
+                const orderedResponse = {
+                    "AI Response": orderedAIResponse,
+                    "Metadata [or Reference sources]": orderedMetadata
+                };
+
+                // Display ordered JSON response in formatted style
+                document.getElementById('result').textContent = JSON.stringify(orderedResponse, null, 4);
+                console.log("Success:", JSON.stringify(orderedResponse, null, 4));
+            })
+            .catch(error => {
+                document.getElementById('result').textContent = "Error: " + error.message;
+                console.error("Error:", error);
+            });
+
+        });
+    </script>
+</body>
+</html>

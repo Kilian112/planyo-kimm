@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.5;
+        }
+        #chatHistory {
+            width: 70%;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            max-height: 70vh;
+            overflow-y: auto; /* Allow scrolling */
+        }
+        .namespace-banner {
+            background-color: yellow;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .assistant-message {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        #metadata-section {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+        }
+        #metadata-output {
+            margin-top: 10px;
+        }
+        .metadata-link {
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .metadata-entry {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .highlight {
+            background-color: yellow;
+            transition: background-color 1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatHistory">
+        <!-- Namespace banner -->
+        <div id="namespace-banner" class="namespace-banner" style="display: none;"></div>
+
+        <!-- Chat messages -->
+        <div id="chatMessages"></div>
+
+        <!-- Metadata section -->
+        <div id="metadata-section">
+            <h4 id="metadata-header">Metadata [or Reference sources]:</h4>
+            <div id="metadata-output"></div>
+        </div>
+    </div>
+
+    <button onclick="simulateInference()">Simulate Query Response</button>
+
+    <script>
+        // Simulate query response with metadata
+        function simulateInference() {
+            // Add namespace banner
+            const namespaceBanner = document.getElementById("namespace-banner");
+            namespaceBanner.textContent = "Switched to namespace: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf";
+            namespaceBanner.style.display = "block";
+
+            // Add inference text
+            const chatMessages = document.getElementById("chatMessages");
+            chatMessages.innerHTML = `
+                <div class="assistant-message">
+                    The document discusses a cloud-based sentiment analysis design. [1] 
+                    It highlights real-time monitoring and hardware efficiency. [2]
+                    Former Russian President Dmitry Medvedev has criticized the new leaders of the EU for visiting Kiev on their first day in office. In a post on X, he argued that the arrival in the Ukrainian capital of Kaja Kallas, the new foreign policy chief, and Antonio Costa, the president of the European Council, signals a commitment to prolonging the Ukraine conflict.  
+
+                    “Costa, the new European Council head, and the Russophobic ‘top EU diplomat’ Kallas turn up in Kiev on their first day. It shows the priority is prolonging the war, not ensuring the wellbeing of the EU. Happy now, Europeans?” Medvedev, who serves as deputy chairman of Russia’s Security Council, remarked.  
+
+                    The visit by Kallas and Costa to Kiev on Sunday was their first official engagement after taking office. Kallas, formerly the prime minister of Estonia, succeeded Josep Borrell as the EU’s top diplomat. Known for her strident anti-Russia stance, Kallas has advocated for tougher sanctions. She was placed on a Russian wanted list this year due to her efforts to destroy Soviet WWII memorials in Estonia.  
+
+                    Antonio Costa, the former prime minister of Portugal, took over from Charles Michel as European Council president.   
+
+                    Both Borrell and Michel supported continuing military aid to Ukraine. However, in his farewell remarks, Borrell expressed concern about the bloc’s security, suggesting that Washington’s commitment might be less certain with Donald Trump set to return to the White House. Borrell also earlier defended the US decision to allow Ukraine to use Western-supplied long-range missiles for strikes deep into Russia.  
+                    READ MORE: Zelensky changes position on ceasefire terms
+
+                    Moscow has warned that Western assistance to Ukraine only serves to extend the conflict without changing the eventual outcome.Additionally, it explores the use of APIs for sentiment analysis. [3]
+                    Businesses can gain insights into trends through this design. [4]
+                </div>
+                <div class="assistant-message">
+                    The design leverages multithreading for processing efficiency. [5]
+                    Tools like Kafka and Spark ensure robust data pipelines. [6]
+                </div>
+            `;
+
+            // Add metadata section
+            const metadataSection = document.getElementById("metadata-section");
+            const metadataOutput = document.getElementById("metadata-output");
+            metadataOutput.innerHTML = `
+                <div class="metadata-entry" id="metadata-1">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 18
+                </div>
+                <div class="metadata-entry" id="metadata-2">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 19
+                </div>
+                <div class="metadata-entry" id="metadata-3">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 22
+                </div>
+                <div class="metadata-entry" id="metadata-4">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 25
+                </div>
+                <div class="metadata-entry" id="metadata-5">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 28
+                </div>
+                <div class="metadata-entry" id="metadata-6">
+                    Filename: CLOUD-BASED-SENTIMENT-ANALYSIS_06032024.pdf, Page: 30
+                </div>
+            `;
+            metadataSection.style.display = "block"; // Show metadata section
+
+            // Dynamically update in-text metadata links
+            simulateLinkRendering();
+        }
+
+        // Smooth scrolling for metadata links
+        document.addEventListener("click", function (event) {
+            if (event.target.classList.contains("metadata-link")) {
+                event.preventDefault();
+                const targetId = event.target.getAttribute("href").replace("#", "");
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                    targetElement.classList.add("highlight");
+                    setTimeout(() => targetElement.classList.remove("highlight"), 1500);
+                }
+            }
+        });
+
+        // Dynamically update in-text metadata links
+        function simulateLinkRendering() {
+            const chatMessages = document.getElementById("chatMessages");
+            chatMessages.innerHTML = chatMessages.innerHTML.replace(/\[(\d+)\]/g, (match, p1) => {
+                return `<a href="#metadata-${p1}" class="metadata-link">${match}</a>`;
+            });
+        }
+    </script>
+</body>
+</html>
