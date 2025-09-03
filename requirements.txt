@@ -1,7 +1,7 @@
 Flask-SQLAlchemy
 Flask==2.2.5
 Flask-CORS
-requests
+requests~=2.32.4
 python-dotenv
 psycopg2-binary
 gunicorn
@@ -17,4 +17,6 @@ librosa==0.10.0.*
 numba==0.56.4
 Flask-Migrate
 uvicorn
-beautifulsoup4
+beautifulsoup4~=4.13.4
+
+transformers~=4.56.0
